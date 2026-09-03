@@ -11,32 +11,21 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import pandas as pd
 import numpy as np
 
+
 BASE_PIPELINE = [
     ("imputer", SimpleImputer(strategy="median")),
     ("scaler", StandardScaler()),
 ]
 
-LINEAR_GRID = {
-    "model__alpha": [0.001, 0.01, 0.1, 0.3, 0.5, 0.7, 1.0, 10.0],
-    "model__l1_ratio": [0.0, 0.5, 1.0],
-}
-
 MODELS = {
     "simple_elastic": {
         "pipeline": Pipeline(BASE_PIPELINE + [("model", ElasticNet(max_iter=1000))]),
-        "param_grid": LINEAR_GRID,
+        "param_grid": {
+            "model__alpha": [0.001, 0.01, 0.1, 0.3, 0.5, 0.7, 1.0, 10.0],
+            "model__l1_ratio": [0.0, 0.5, 1.0],
+        },
     },
-    "poly_elastic_3": {
-        "pipeline": Pipeline(
-            BASE_PIPELINE
-            + [
-                ("poly", PolynomialFeatures(degree=3, include_bias=False)),
-                ("model", ElasticNet(max_iter=1000)),
-            ]
-        ),
-        "param_grid": LINEAR_GRID,
-    },
-    "poly_elastic_2": {
+    "poly_elastic": {
         "pipeline": Pipeline(
             BASE_PIPELINE
             + [
@@ -44,7 +33,10 @@ MODELS = {
                 ("model", ElasticNet(max_iter=1000)),
             ]
         ),
-        "param_grid": LINEAR_GRID,
+        "param_grid": {
+            "model__alpha": [0.001, 0.01, 0.1, 0.3, 0.5, 0.7, 1.0, 10.0],
+            "model__l1_ratio": [0.0, 0.5, 1.0],
+        },
     },
     "knn": {
         "pipeline": Pipeline(BASE_PIPELINE + [("model", KNeighborsRegressor())]),
@@ -55,9 +47,11 @@ MODELS = {
     },
 }
 
+
 def set_seed(seed: int = 1):
     np.random.seed(seed)
     random.seed(seed)
+
 
 def load_dataset(test_size: float = 0.2, random_state: int = 1):
     ds = fetch_california_housing(as_frame=True)
@@ -70,6 +64,7 @@ def load_dataset(test_size: float = 0.2, random_state: int = 1):
     )
 
     return X_train, X_test, y_train, y_test
+
 
 def train(
     model: str,
@@ -99,6 +94,7 @@ def train(
 
     return grid_search
 
+
 def eval(grid_search: GridSearchCV, X_test: pd.DataFrame, y_test: pd.DataFrame):
     best = grid_search.best_estimator_
 
@@ -115,5 +111,3 @@ def eval(grid_search: GridSearchCV, X_test: pd.DataFrame, y_test: pd.DataFrame):
         "mae": mae,
         "r2": r2,
     }
-
-
